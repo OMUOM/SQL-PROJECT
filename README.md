@@ -98,7 +98,7 @@ WHERE country like 'United States%'
 ```
   
 * ## Null Values or Blank
- It involves identifying and eliminating missing or empty data points to improve data quality and accuracy for analysis.
+It involves identifying and eliminating missing or empty data points to improve data quality and accuracy for analysis.
 
 ```SQL
 SELECT *
@@ -154,5 +154,113 @@ ALTER TABLE HAMAN..[layoffs$]
 ALTER COLUMN percentage_laid_off float NULL
 GO
 ```
- 
+* ## Removing Columns That Are Not Necessary
+Removing irrelevant columns and data is a critical phase in data cleaning. This process eliminates unnecessary information, improving data quality by reducing noise. It requires careful consideration to avoid removing valuable data.
+
+```SQL
+SELECT *
+FROM HAMAN..layoffs$
+WHERE percentage_laid_off = 1
+
+SELECT MAX(total_laid_off), MAX(percentage_laid_off)
+FROM HAMAN..layoffs$
+
+SELECT *
+FROM HAMAN..layoffs$
+WHERE percentage_laid_off = 1
+ORDER BY total_laid_off DESC
+
+SELECT *
+FROM HAMAN..layoffs$
+WHERE percentage_laid_off = 1
+ORDER BY funds_raised_millions DESC
+
+SELECT company, SUM(total_laid_off)
+FROM HAMAN..layoffs$
+GROUP BY company
+ORDER BY 2 DESC
+
+SELECT MIN([date]), MAX([date])
+FROM HAMAN..layoffs$
+
+SELECT industry, SUM(total_laid_off)
+FROM HAMAN..layoffs$
+GROUP BY industry
+ORDER BY 2 DESC
+
+SELECT country, SUM(total_laid_off)
+FROM HAMAN..layoffs$
+GROUP BY country
+ORDER BY 2 DESC
+
+SELECT YEAR([date]), SUM(total_laid_off)
+FROM HAMAN..layoffs$
+GROUP BY YEAR([date])
+ORDER BY 2 DESC
+
+SELECT stage, SUM(total_laid_off)
+FROM HAMAN..layoffs$
+GROUP BY stage
+ORDER BY 2 DESC
+
+
+ALTER TABLE HAMAN..[layoffs$]
+ALTER COLUMN [date] date
+GO
+
+SELECT MONTH([date]) AS [MONTH], SUM(total_laid_off)
+FROM HAMAN..layoffs$
+WHERE MONTH([date]) IS NOT NULL
+GROUP BY MONTH([date])
+ORDER BY 1 DESC
+
+--SELECT DATEPART (YEAR, [date]), DATEPART (MONTH, [date]), SUM(total_laid_off)
+--FROM HAMAN..layoffs$
+--WHERE DATEPART (YEAR, [date]) IS NOT NULL
+--GROUP BY DATEPART (MONTH, [date])
+--ORDER BY 2 DESC
+
+
+SELECT company,YEAR([date]), SUM(total_laid_off)
+FROM HAMAN..layoffs$
+GROUP BY company, YEAR([date])
+ORDER BY 3 DESC
+
+
+
+
+WITH Company_Year  (Company, years, total_laid_off) as -- This CTE will be used to rank which company laid off the most per year
+(
+SELECT company,YEAR([date]), SUM(total_laid_off)
+FROM HAMAN..layoffs$
+GROUP BY  YEAR([date]), company
+)
+SELECT *, 
+DENSE_RANK() OVER (PARTITION BY years ORDER BY total_laid_off DESC) AS Ranking
+FROM Company_Year
+WHERE years IS NOT NULL
+ORDER BY Ranking ASC 
+
+
+
+
+
+
+WITH Company_Year  (Company, years, total_laid_off) as 
+(
+SELECT company,YEAR([date]), SUM(total_laid_off)
+FROM HAMAN..layoffs$
+GROUP BY  YEAR([date]), company
+), Company_Year_Rank AS
+(
+SELECT *, 
+DENSE_RANK() OVER (PARTITION BY years ORDER BY total_laid_off DESC) AS Ranking
+FROM Company_Year
+WHERE years IS NOT NULL
+--ORDER BY Ranking ASC 
+)
+SELECT*
+FROM Company_Year_Rank
+--WHERE Ranking <= 5 -- This here will show top 5 companies lay off per year
+```
   
