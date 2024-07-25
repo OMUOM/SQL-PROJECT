@@ -11,7 +11,7 @@ The dataset includes global layoff data from 2021 to 2023. It details companies 
 ## SQL Code Explanation
 
 * ## Removing Dublicates
-```
+```SQL
 SELECT *,
 ROW_NUMBER() OVER(PARTITION BY company,[location], industry, total_laid_off, percentage_laid_off, [date],
 stage,country,funds_raised_millions ORDER BY company ) AS Raw_Number
